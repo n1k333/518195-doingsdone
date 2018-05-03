@@ -44,7 +44,9 @@ $cat_objective = [
 ];
 
 function get_count_of_tasks($array = array(), $task_name = 'Все') {
-  	if ($task_name == 'Все') return count($array);
+  	if ($task_name == 'Все') {
+      return count($array);
+    }
     $counter = 0;
     foreach($array as $a) {
     if ($task_name == $a['category']) $counter++;
@@ -68,7 +70,7 @@ function get_count_of_tasks($array = array(), $task_name = 'Все') {
 <h1 class="visually-hidden">Дела в порядке</h1>
 
 <div class="page-wrapper">
-    <div class="container container--with-sidebar">
+  <div class="container container--with-sidebar">
         <header class="main-header">
             <a href="#">
                 <img src="img/logo.png" width="153" height="42" alt="Логотип Дела в порядке">
