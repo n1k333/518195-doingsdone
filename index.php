@@ -43,6 +43,17 @@ $cat_objective = [
   ],
 ];
 
+function get_count_of_tasks($array = array(), $task_name = 'Все') {
+  	if ($task_name == 'Все') {
+      return count($array);
+    }
+    $counter = 0;
+    foreach($array as $a) {
+    if ($task_name == $a['category']) $counter++;
+  }
+    return $counter;
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -59,7 +70,7 @@ $cat_objective = [
 <h1 class="visually-hidden">Дела в порядке</h1>
 
 <div class="page-wrapper">
-    <div class="container container--with-sidebar">
+  <div class="container container--with-sidebar">
         <header class="main-header">
             <a href="#">
                 <img src="img/logo.png" width="153" height="42" alt="Логотип Дела в порядке">
@@ -89,16 +100,16 @@ $cat_objective = [
 
                 <nav class="main-navigation">
 
-                  <ul class="main-navigation__list">
+                    <ul class="main-navigation__list">
 
-                    <?php
-                    $i = 0;
-                    foreach ($cat_project as $key => $val): ?>
-                      <li class="main-navigation__list-item <?=$i==0?'main-navigation__list-item--active':'';$i++;?>">
-                        <a class="main-navigation__list-item-link" href="?page=<?=$val;?>"><?=$val;?></a>
-                        <span class="main-navigation__list-item-count">24</span>
-                      </li>
-                    <?php endforeach; ?>
+<?php
+$i = 0;
+foreach ($cat_project as $key => $val): ?>
+  <li class="main-navigation__list-item <?=$i==0?'main-navigation__list-item--active':'';$i++;?>">
+    <a class="main-navigation__list-item-link" href="?page=<?=$val;?>"><?=$val;?></a>
+    <span class="main-navigation__list-item-count"><?=get_count_of_tasks($cat_objective, $val);?></span>
+  </li>
+<?php endforeach; ?>
 
                     </ul>
                   </nav>
@@ -214,3 +225,6 @@ $cat_objective = [
 <script src="script.js"></script>
 </body>
 </html>
+
+
+       
