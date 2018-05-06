@@ -38,7 +38,7 @@
     <!--показывать следующий тег <tr/>, если переменная $show_complete_tasks равна единице-->
     <?php if ($show_complete_tasks == 1): ?>
       <?php foreach ($cat_objective as $key => $val): ?>
-      <tr class="tasks__item task <?=htmlspecialchars($val['status']) == 'Да'?'task--completed':''?>">
+      <tr class="tasks__item task  <?=task_date_limit($val['cdate'])==1?"task--important":'';?> <?=htmlspecialchars($val['status']) == 'Да'?'task--completed':''?>">
         <td class="task__select">
           <label class="checkbox task__checkbox">
             <input class="checkbox__input visually-hidden" type="checkbox" checked>
