@@ -35,17 +35,6 @@ CREATE TABLE `projects` (
   `projects_name` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
---
--- Дамп данных таблицы `projects`
---
-
-INSERT INTO `projects` (`id`, `projects_name`) VALUES
-(5, 'Авто'),
-(1, 'Входящие'),
-(4, 'Домашние дела'),
-(3, 'Работа'),
-(2, 'Учеба');
-
 -- --------------------------------------------------------
 
 --
@@ -74,7 +63,7 @@ CREATE TABLE `users` (
   `reg_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `email` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
-  `password` varchar(50) NOT NULL,
+  `password` varchar(255) NOT NULL,
   `contacts` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
