@@ -46,12 +46,10 @@
 
                     <ul class="main-navigation__list">
 
-<?php
-$i = 0;
-foreach ($cat_project as $key => $val): ?>
-  <li class="main-navigation__list-item <?=$i==0?'main-navigation__list-item--active':'';$i++;?>">
-    <a class="main-navigation__list-item-link" href="?page=<?=$val;?>"><?=$val;?></a>
-    <span class="main-navigation__list-item-count"><?=get_count_of_tasks($cat_objective, $val);?></span>
+<?php foreach ($cat_projects as $key => $val): ?>
+  <li class="main-navigation__list-item <?=$val[0]==$category?'main-navigation__list-item--active':''?>">
+    <a class="main-navigation__list-item-link" href="?page=<?=$val[0];?>"><?=$key;?></a>
+    <span class="main-navigation__list-item-count"><?=$val[1]?></span>
   </li>
 <?php endforeach; ?>
 

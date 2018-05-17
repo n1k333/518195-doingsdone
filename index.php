@@ -1,67 +1,41 @@
 <?php
+// соединение с mysqli
+$link = mysqli_connect("localhost", "root", "", "things_are_fine");
+if (!$link) {
+    printf("Текст ошибки: %s\n", mysqli_connect_error());
+    exit();
+}
+// определяем user_id;
+$user_id = 2;
+
 // показывать или нет выполненные задачи
 $show_complete_tasks = rand(0, 1);
-
-$cat_project = ['Все', 'Входящие', 'Учеба', 'Работа', 'Домашние дела', 'Авто'];
-
-$cat_objective = [
-  [
-    'tasks' => 'Собеседование в IT компании',
-    'cdate' => '01.10.2018',
-    'category' => 'Работа',
-    'status' => 'Нет'
-  ],
-  [
-    'tasks' => 'Выполнить тестовое задание',
-    'cdate' => '06.05.2018',
-    'category' => 'Работа',
-    'status' => 'Нет'
-  ],
-  [
-    'tasks' => 'Сделать задание первого раздела',
-    'cdate' => '25.05.2018',
-    'category' => 'Учеба',
-    'status' => 'Да'
-  ],
-  [
-    'tasks' => 'Встреча с другом',
-    'cdate' => '22.04.2018',
-    'category' => 'Входящие',
-    'status' => 'Нет'
-  ],
-  [
-    'tasks' => 'Купить корм для кота',
-    'cdate' => 'Нет',
-    'category' => 'Домашние дела',
-    'status' => 'Нет'
-  ],
-  [
-    'tasks' => 'Заказать пиццу',
-    'cdate' => 'Нет',
-    'category' => 'Домашние дела',
-    'status' => 'Нет'
-  ],
-];
-
+// определяем $title
 $title = "Дела в порядке";
-
+// подключаем файл с функциями
 require_once('functions.php');
+// проверяем $_GET['page'] и присваеваем результат переменной $categoryi
+$category = empty($_GET['page'])?0:$_GET['page'];
+$category = intval($category);
+// получаем список категорий с task=tasks.tasks_name,
+// cdate=tasks.deadline_task, category=projects.projects_name,
+// status=tasks.date_task_execution
+
+$cat_objective = getCatObjective($user_id, $category, $link);
 
 $main = renderTemplate('templates/index.php', array(
   'cat_objective' => $cat_objective,
   'show_complete_tasks' => $show_complete_tasks,
 ));
+$cat_projects = getCategoriesByUser($user_id, $link);
 
 $layout_content = renderTemplate('templates/layout.php', array(
+  'category' => $category,
   'title' => $title,
-  'cat_project' => $cat_project,
+  'cat_projects' => $cat_projects,
   'cat_objective' => $cat_objective,
   'main' => $main,
-
 ));
 print($layout_content);
 
-
-
-
-?>
+mysqli_close($link);
