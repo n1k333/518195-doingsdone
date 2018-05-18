@@ -38,14 +38,15 @@
     <!--показывать следующий тег <tr/>, если переменная $show_complete_tasks равна единице-->
     <?php if ($show_complete_tasks == 1): ?>
       <?php foreach ($cat_objective as $key => $val): ?>
-      <tr class="tasks__item task  <?=task_date_limit($val['cdate'])==1?"task--important":'';?> <?=htmlspecialchars($val['status']) == 'Да'?'task--completed':''?>">
+      <tr class="tasks__item task  <?=task_date_limit($val['cdate'])==1?"task--important":'';?>
+        <?=$val['status']!==null?'task--completed':''?>">
         <td class="task__select">
           <label class="checkbox task__checkbox">
             <input class="checkbox__input visually-hidden" type="checkbox" checked>
             <span class="checkbox__text"><?=htmlspecialchars($val['tasks']); ?></span>
           </label>
         </td>
-        <td class="task__date"><?=htmlspecialchars($val['cdate']); ?></td>
+        <td class="task__date"><?=!empty($val['cdate'])?htmlspecialchars($val['cdate']):'Нет'; ?></td>
         <td class="task__controls"></td>
         <td class="task__category"><?=htmlspecialchars($val['category']); ?></td>
         <td class="task__controls"></td>
