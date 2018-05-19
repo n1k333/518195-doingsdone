@@ -48,7 +48,11 @@
 
 <?php foreach ($cat_projects as $key => $val): ?>
   <li class="main-navigation__list-item <?=$val[0]==$category?'main-navigation__list-item--active':''?>">
-    <a class="main-navigation__list-item-link" href="?page=<?=$val[0];?>"><?=$key;?></a>
+    <?php if($val[0]==='/'):?>
+      <a class="main-navigation__list-item-link" href="/"><?=$key;?></a>
+    <?php else:?>
+      <a class="main-navigation__list-item-link" href="?page=<?=$val[0];?>"><?=$key;?></a>
+    <?php endif;?>
     <span class="main-navigation__list-item-count"><?=$val[1]?></span>
   </li>
 <?php endforeach; ?>

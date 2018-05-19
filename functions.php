@@ -29,6 +29,8 @@ function task_date_limit($task_date = '06.05.2018') {
 
 function getCategoriesByUser($user_id, $link) {
   $result = array();
+  $result['Все']=['/', 0];
+  $counter = 0;
   $stmt = mysqli_prepare($link, "SELECT projects.id as id, projects_name,
     count(*) as count from tasks
     join projects on tasks.projects_id = projects.id
@@ -39,19 +41,14 @@ function getCategoriesByUser($user_id, $link) {
   mysqli_stmt_bind_result($stmt, $id, $project_name, $count);
   while (mysqli_stmt_fetch($stmt)) {
     $result[$project_name] = array($id, $count);
+    $counter = $counter + $count;
   }
-  $counter = 0;
-  foreach($result as $key => $val) {
-    $counter += $val[1];
-  }
-  $result['Все']=[0, $counter];
-  // установить элемент массива 'Все' на первое место
-  $result = array_merge(array('Все'=>$result['Все']), $result);
+  $result['Все']=['/', $counter];
   return $result;
 }
 
 function getCatObjective($user_id, $category, $link=0) {
-  if ($category === 0) {
+  if ($category === '/') {
     $stmt = mysqli_prepare($link, "SELECT tasks_name as tasks,
             deadline_task as cdate,
             projects_name as category,
@@ -71,6 +68,7 @@ function getCatObjective($user_id, $category, $link=0) {
     }
     return $result;
   } else {
+    $result = array();
     $stmt = mysqli_prepare($link, "SELECT tasks_name as tasks,
             deadline_task as cdate,
             projects_name as category,

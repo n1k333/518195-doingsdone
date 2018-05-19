@@ -14,14 +14,17 @@ $show_complete_tasks = rand(0, 1);
 $title = "Дела в порядке";
 // подключаем файл с функциями
 require_once('functions.php');
-// проверяем $_GET['page'] и присваеваем результат переменной $categoryi
-$category = empty($_GET['page'])?0:$_GET['page'];
-$category = intval($category);
+// проверяем $_GET['page'] и присваеваем результат переменной $category
+$category = !isset($_GET['page'])?'/':$_GET['page'];
 // получаем список категорий с task=tasks.tasks_name,
 // cdate=tasks.deadline_task, category=projects.projects_name,
 // status=tasks.date_task_execution
 
 $cat_objective = getCatObjective($user_id, $category, $link);
+if (empty($cat_objective)) {
+  header('Location: 404.php');
+  exit();
+}
 
 $main = renderTemplate('templates/index.php', array(
   'cat_objective' => $cat_objective,
