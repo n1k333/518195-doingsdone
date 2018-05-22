@@ -5,8 +5,10 @@ function renderTemplate($path, $params) {
   if (!file_exists($path)) {
     return ('');
   }
-  foreach($params as $key => $value) {
-    $$key = $value;
+  if (!empty($params)) {
+    foreach($params as $key => $value) {
+      $$key = $value;
+    }
   }
   ob_start();
   require($path);
@@ -47,23 +49,35 @@ function getCategoriesByUser($user_id, $link) {
   return $result;
 }
 
+function get_all_projects($link) {
+  $stmt = mysqli_prepare($link, "SELECT id, projects_name from projects");
+  mysqli_stmt_execute($stmt);
+  mysqli_stmt_bind_result($stmt,$id, $project_name);
+  while (mysqli_stmt_fetch($stmt)) {
+    $result[$id] = $project_name;
+  }
+  return $result;
+}
+
 function getCatObjective($user_id, $category, $link=0) {
   if ($category === '/') {
     $stmt = mysqli_prepare($link, "SELECT tasks_name as tasks,
             deadline_task as cdate,
             projects_name as category,
-            date_task_execution as status
+            date_task_execution as status,
+            file_reference as file
             FROM tasks JOIN projects on projects_id = projects.id
             WHERE users_id = ?");
     mysqli_stmt_bind_param($stmt, 'i', $user_id);
     mysqli_stmt_execute($stmt);
-    mysqli_stmt_bind_result($stmt, $tasks, $cdate, $category, $status);
+    mysqli_stmt_bind_result($stmt, $tasks, $cdate, $category, $status, $file);
     while (mysqli_stmt_fetch($stmt)) {
       $result[] =   [
           'tasks' => $tasks,
           'cdate' => $cdate,
           'category' => $category,
-          'status' => $status
+          'status' => $status,
+          'file' => $file,
         ];
     }
     return $result;
@@ -72,20 +86,41 @@ function getCatObjective($user_id, $category, $link=0) {
     $stmt = mysqli_prepare($link, "SELECT tasks_name as tasks,
             deadline_task as cdate,
             projects_name as category,
-            date_task_execution as status
+            date_task_execution as status,
+            file_reference as file
             FROM tasks JOIN projects on projects_id = projects.id
             WHERE users_id = ? and projects_id = ?");
     mysqli_stmt_bind_param($stmt, 'ii', $user_id, $category);
     mysqli_stmt_execute($stmt);
-    mysqli_stmt_bind_result($stmt, $tasks, $cdate, $category, $status);
+    mysqli_stmt_bind_result($stmt, $tasks, $cdate, $category, $status, $file);
     while (mysqli_stmt_fetch($stmt)) {
       $result[] =   [
           'tasks' => $tasks,
           'cdate' => $cdate,
           'category' => $category,
-          'status' => $status
+          'status' => $status,
+          'file' => $file,
         ];
     }
     return $result;
   }
+}
+
+function insert_new_task($link, $user_id, $form_name, $form_project, $form_date = '', $target_file = '') {
+    if (!empty($form_date)) {
+      $stmt = mysqli_prepare($link, "INSERT INTO tasks (
+        users_id, date_task_creation, tasks_name, file_reference, deadline_task, projects_id)
+        VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?, ?)
+        ");
+
+      mysqli_stmt_bind_param($stmt, 'isssi',  $user_id,  $form_name, $target_file, $form_date, $form_project);
+    } else {
+      $stmt = mysqli_prepare($link, "INSERT INTO tasks (
+        users_id, date_task_creation, tasks_name, file_reference, deadline_task, projects_id)
+        VALUES (?, CURRENT_TIMESTAMP, ?, ?, NULL, ?)
+        ");
+
+      mysqli_stmt_bind_param($stmt, 'issi',  $user_id,  $form_name, $target_file, $form_project);
+    }
+    mysqli_stmt_execute($stmt);
 }
