@@ -22,8 +22,6 @@ $show_complete_tasks = rand(0, 1);
 $title = "Дела в порядке";
 // подключаем файл с функциями
 require_once('functions.php');
-
-
 // Операции с данными полученными из формы
 if (!empty($_GET['action']) && $_GET['action'] === 'new_project') {
   if (!empty($_POST['name'])) {
@@ -67,6 +65,7 @@ if (!empty($_GET['action']) && $_GET['action'] === 'new_project') {
   } else {
     insert_new_task($link, $user_id, $form_name, $form_project, $form_date, $file_name);
     header('Location: /index.php');
+    exit();
   }
 }
 

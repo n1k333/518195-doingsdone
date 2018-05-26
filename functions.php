@@ -59,6 +59,16 @@ function get_all_projects($link) {
   return $result;
 }
 
+function get_all_register($link) {
+  $stmt = mysqli_prepare($link, "SELECT id, email from users");
+  mysqli_stmt_execute($stmt);
+  mysqli_stmt_bind_result($stmt,$id, $email);
+  while (mysqli_stmt_fetch($stmt)) {
+    $result[$id] = $email;
+  }
+  return $result;
+}
+
 function getCatObjective($user_id, $category, $link=0) {
   if ($category === '/') {
     $stmt = mysqli_prepare($link, "SELECT tasks_name as tasks,
@@ -104,6 +114,23 @@ function getCatObjective($user_id, $category, $link=0) {
     }
     return $result;
   }
+}
+
+function check_if_user_exists($link, $email) {
+  $stmt = mysqli_prepare($link, "SELECT count(*) AS count FROM users WHERE email = ?");
+  mysqli_stmt_bind_param($stmt, 's',  $email);
+  mysqli_stmt_execute($stmt);
+  mysqli_stmt_bind_result($stmt, $count);
+  mysqli_stmt_fetch($stmt);
+  return $count;
+}
+
+function create_new_user($link, $email, $password, $name) {
+  $password = password_hash($password, PASSWORD_DEFAULT);
+  $stmt = mysqli_prepare($link, "INSERT INTO users (reg_date, email, name, password, contacts)
+                                VALUES (CURRENT_TIMESTAMP, ?, ?, ?, ?)");
+  mysqli_stmt_bind_param($stmt, 'ssss',  $email, $name, $password, $email);
+  mysqli_stmt_execute($stmt);
 }
 
 function insert_new_task($link, $user_id, $form_name, $form_project, $form_date = '', $target_file = '') {
