@@ -15,7 +15,7 @@ function renderTemplate($path, $params) {
   return ob_get_clean();
 }
 
-function task_date_limit($task_date = '06.05.2018') {
+function task_date_limit($task_date) {
   if(empty($task_date)) {
     return 0;
   }
@@ -69,52 +69,51 @@ function get_all_register($link) {
   return $result;
 }
 
-function getCatObjective($user_id, $category, $link=0) {
+function getCatObjective($user_id, $category, $link) {
   $result = array();
-  if ($category === '/') {
-    $stmt = mysqli_prepare($link, "SELECT tasks_name as tasks,
-            deadline_task as cdate,
-            projects_name as category,
-            date_task_execution as status,
-            file_reference as file
-            FROM tasks JOIN projects on projects_id = projects.id
-            WHERE users_id = ?");
-    mysqli_stmt_bind_param($stmt, 'i', $user_id);
-    mysqli_stmt_execute($stmt);
-    mysqli_stmt_bind_result($stmt, $tasks, $cdate, $category, $status, $file);
-    while (mysqli_stmt_fetch($stmt)) {
-      $result[] =   [
-          'tasks' => $tasks,
-          'cdate' => $cdate,
-          'category' => $category,
-          'status' => $status,
-          'file' => $file,
-        ];
-    }
-    return $result;
-  } else {
-    $result = array();
-    $stmt = mysqli_prepare($link, "SELECT tasks_name as tasks,
-            deadline_task as cdate,
-            projects_name as category,
-            date_task_execution as status,
-            file_reference as file
-            FROM tasks JOIN projects on projects_id = projects.id
-            WHERE users_id = ? and projects_id = ?");
-    mysqli_stmt_bind_param($stmt, 'ii', $user_id, $category);
-    mysqli_stmt_execute($stmt);
-    mysqli_stmt_bind_result($stmt, $tasks, $cdate, $category, $status, $file);
-    while (mysqli_stmt_fetch($stmt)) {
-      $result[] =   [
-          'tasks' => $tasks,
-          'cdate' => $cdate,
-          'category' => $category,
-          'status' => $status,
-          'file' => $file,
-        ];
-    }
-    return $result;
+  $sql = "SELECT tasks.id as id, tasks_name as tasks, deadline_task as cdate, projects_name as category,
+          date_task_execution as status, file_reference as file
+          FROM tasks JOIN projects on projects_id = projects.id
+          WHERE users_id = ? ";
+  switch ($category) {
+    case 'today':
+      $sql = $sql . "AND DATE_FORMAT(deadline_task, '%Y-%m-%d') = CURDATE()";
+      $stmt = mysqli_prepare($link, $sql);
+      mysqli_stmt_bind_param($stmt, 'i', $user_id);
+      break;
+    case 'tomorrow':
+      $sql = $sql . "AND DATE_FORMAT(deadline_task, '%Y-%m-%d') = CURDATE() + INTERVAL 1 DAY";
+      $stmt = mysqli_prepare($link, $sql);
+      mysqli_stmt_bind_param($stmt, 'i', $user_id);
+      break;
+    case 'missed':
+      $sql = $sql . 'AND deadline_task < now()';
+      $stmt = mysqli_prepare($link,$sql);
+      mysqli_stmt_bind_param($stmt, 'i', $user_id);
+      break;
+    case '/':
+      $stmt = mysqli_prepare($link, $sql);
+      mysqli_stmt_bind_param($stmt, 'i', $user_id);
+      break;
+    default:
+      $sql = $sql . 'and projects_id = ?';
+      $stmt = mysqli_prepare($link, $sql);
+      mysqli_stmt_bind_param($stmt, 'ii', $user_id, $category);
+      break;
   }
+  mysqli_stmt_execute($stmt);
+  mysqli_stmt_bind_result($stmt, $id, $tasks, $cdate, $category, $status, $file);
+  while (mysqli_stmt_fetch($stmt)) {
+    $result[] =   [
+        'id' => $id,
+        'tasks' => $tasks,
+        'cdate' => $cdate,
+        'category' => $category,
+        'status' => $status,
+        'file' => $file,
+      ];
+  }
+  return $result;
 }
 
 function check_if_user_exists($link, $email) {
@@ -131,6 +130,32 @@ function create_new_user($link, $email, $password, $name) {
   $stmt = mysqli_prepare($link, "INSERT INTO users (reg_date, email, name, password, contacts)
                                 VALUES (CURRENT_TIMESTAMP, ?, ?, ?, ?)");
   mysqli_stmt_bind_param($stmt, 'ssss',  $email, $name, $password, $email);
+  mysqli_stmt_execute($stmt);
+}
+
+function change_state($link, $user_id, $id) {
+  $stmt = mysqli_prepare($link, "SELECT id, date_task_execution as cdate from tasks where users_id = ? and id = ?");
+  mysqli_stmt_bind_param($stmt, 'ii',  $user_id, $id);
+  mysqli_stmt_execute($stmt);
+  mysqli_stmt_bind_result($stmt, $tid, $cdate);
+  mysqli_stmt_fetch($stmt);
+  unset($stmt);
+  if (empty($tid)) { die('Hacker attempt!'); }
+  if (empty($cdate)) {
+    $stmt = mysqli_prepare($link, "UPDATE tasks SET date_task_execution = CURRENT_TIMESTAMP() WHERE id = ?");
+    mysqli_stmt_bind_param($stmt, 'i',  $tid);
+    mysqli_stmt_execute($stmt);
+  } else {
+    $stmt = mysqli_prepare($link, "UPDATE tasks SET date_task_execution = null WHERE id = ?");
+    mysqli_stmt_bind_param($stmt, 'i',  $tid);
+    mysqli_stmt_execute($stmt);
+  }
+}
+
+
+function create_new_category($link, $category) {
+  $stmt = mysqli_prepare($link, "INSERT IGNORE INTO projects (projects_name) VALUES (?)");
+  mysqli_stmt_bind_param($stmt, 's',  $category);
   mysqli_stmt_execute($stmt);
 }
 

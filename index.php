@@ -20,19 +20,24 @@ $errors = '';
 $errors_name = '';
 $errors_projekt = '';
 $attribute = 'hidden';
+$catattribute = 'hidden';
 $left_section = '';
 $select_name_error = '';
 $select_project_error = '';
 $file_name = '';
 $form_date = '';
+$footer = '';
 // показывать или нет выполненные задачи
-$show_complete_tasks = rand(0, 1);
+$show_complete_tasks = !empty($_GET['show_completed']);
 // определяем $title
 $title = "Дела в порядке";
 // подключаем файл с функциями
 require_once('functions.php');
 
 if (empty($_SESSION['user_id'])) {
+/*********************************************************
+* Этот кодовый блок не предназначен для аутентифицированных пользователей
+**********************************************************/
   $body_class = 'body-background';
   $header = renderTemplate('templates/header.php', array(
     'user' => '',
@@ -56,20 +61,20 @@ if (empty($_SESSION['user_id'])) {
       $body_class = 'overlay';
       $attribute = '';
     } else {
-      $status = login($link, $email['main'], $password['main']);
-      if($status===1) {
+      $loginstatus = login($link, $email['main'], $password['main']);
+      if($loginstatus===1) {
         $body_class = 'overlay';
         $attribute = '';
         $email['error'] = 'form__input--error';
         $email['error_message'] = 'не правильный адресс эл. почты';
       }
-      if($status===2) {
+      if($loginstatus===2) {
         $body_class = 'overlay';
         $attribute = '';
         $password['error'] = 'form__input--error';
         $password['error_message'] = 'Вы ввели неверный пароль';
       }
-      if($status===0) {
+      if($loginstatus===0) {
         header('Location: /');
         exit();
       }
@@ -84,12 +89,11 @@ if (empty($_SESSION['user_id'])) {
     'projects_form' => $autorization_form,
   ));
   $main = renderTemplate('templates/guest.php', array());
-
-
-
 } else {
-
-  // Операции с данными полученными из формы
+/***********************************************************
+* Этот кодовый блок предназначен для авторизованных пользователей
+***********************************************************/
+  // Создать новую задачу
   if (!empty($_GET['action']) && $_GET['action'] === 'new_project' and $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($_POST['name'])) {
       $form_name = $_POST['name'];
@@ -135,17 +139,47 @@ if (empty($_SESSION['user_id'])) {
     }
   }
 
+  // Создать новый проект
+  $project =  array('name'=>'', 'error'=>'', 'error_message'=> '');
+  $category_form = renderTemplate('templates/category_form.php', array(
+    'catattribute' => $catattribute,
+    'project' => $project,
+  ));
+  if (!empty($_GET['action']) && $_GET['action'] === 'new_category' and $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!empty($_POST['name'])) {
+      $project['main'] = $_POST['name'];
+      create_new_category($link, $project['main']);
+      header('Location: /');
+      exit();
+    } else {
+      $project['error'] = 'form__input--error';
+      $project['error_message'] = 'Название проекта не может быть пустым полем';
+      $body_class = 'overlay';
+      $catattribute = '';
+    }
+    $category_form = renderTemplate('templates/category_form.php', array(
+      'catattribute' => $catattribute,
+      'project' => $project,
+    ));
+  }
+
+  // Изменить состояние (выполнено или не выполнено) для задач по идентификатору
+  if (!empty($_GET['action']) and $_GET['action'] === 'change_state' and !empty($_GET['id'])) {
+    $id = $_GET['id'];
+    change_state($link, $user_id, $id);
+    header('Location: /');
+    exit();
+  }
   // проверяем $_GET['page'] и присваеваем результат переменной $category
   $category = !isset($_GET['page'])?'/':$_GET['page'];
-  // получаем список категорий с task=tasks.tasks_name,
-  // cdate=tasks.deadline_task, category=projects.projects_name,
-  // status=tasks.date_task_execution
 
   $cat_objective = getCatObjective($user_id, $category, $link);
-  /*if (empty($cat_objective)) {
+
+
+  if (empty($cat_objective) and $category !=='/' and $category !=='missed' and $category !=='tomorrow' and $category !=='today' ) {
     header('Location: 404.php');
     exit();
-  }*/
+  }
 
   $main = renderTemplate('templates/index.php', array(
     'cat_objective' => $cat_objective,
@@ -168,9 +202,10 @@ if (empty($_SESSION['user_id'])) {
     'attribute' => $attribute));
   $left_section = renderTemplate('templates/left_section.php', array(
     'cat_projects' => $cat_projects,
+    'category' => $category,
   ));
   $footer = renderTemplate('templates/footer.php', array(
-    'projects_form' => $projects_form,
+    'projects_form' => $projects_form . $category_form,
   ));
 }
 
