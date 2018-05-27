@@ -70,6 +70,7 @@ function get_all_register($link) {
 }
 
 function getCatObjective($user_id, $category, $link=0) {
+  $result = array();
   if ($category === '/') {
     $stmt = mysqli_prepare($link, "SELECT tasks_name as tasks,
             deadline_task as cdate,
@@ -150,4 +151,25 @@ function insert_new_task($link, $user_id, $form_name, $form_project, $form_date 
       mysqli_stmt_bind_param($stmt, 'issi',  $user_id,  $form_name, $target_file, $form_project);
     }
     mysqli_stmt_execute($stmt);
+}
+
+function login($link, $email, $password) {
+  $error = '';
+  $stmt = mysqli_prepare($link, "SELECT id, name, password FROM users WHERE email = ?");
+  mysqli_stmt_bind_param($stmt, 's',  $email);
+  mysqli_stmt_execute($stmt);
+  mysqli_stmt_bind_result($stmt, $id, $name, $hash);
+  mysqli_stmt_fetch($stmt);
+  if (empty($hash)) {
+    return 1;
+  } else {
+    if (!password_verify($password, $hash)) {
+      return 2;
+    }
+  }
+
+  $_SESSION['user_id'] = $id;
+  $_SESSION['user_name'] = $name;
+  $_SESSION['user_email'] = $email;
+  return 0;
 }
