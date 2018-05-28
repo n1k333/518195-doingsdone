@@ -24,28 +24,28 @@ $title = "Дела в порядке";
 // подключаем файл с функциями
 require_once('functions.php');
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-  if (empty($_POST['email'])) {
+  if (empty($_POST['email']) || !filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
     $email['error'] = 'form__input--error';
-    $email['error_message'] = 'Adress el. pochty ne mozhet byt pustym polem';
+    $email['error_message'] = 'Введите корректный адрес e-mail';
     $error = 1;
   } else {
     $email['email'] = $_POST['email'];
     if (check_if_user_exists($link, $email['email'])===1) {
       $email['error'] = 'form__input--error';
-      $email['error_message'] = 'Takoj adress el. pochty uzhe sushestvuet';
+      $email['error_message'] = 'Такой e-mail адрес уже есть в системе';
       $error = 1;
     }
   }
   if (empty($_POST['password'])) {
     $password['error'] = 'form__input--error';
-    $password['error_message'] = 'Parol ne mozhet byt pustym polem';
+    $password['error_message'] = 'Пароль не может быть пустым';
     $error = 1;
   } else {
     $password['password'] = $_POST['password'];
   }
   if (empty($_POST['name'])) {
     $name['error'] = 'form__input--error';
-    $name['error_message'] = 'Imya ne mozhet byt pustym polem';
+    $name['error_message'] = 'Имя не может быть пустым';
     $error = 1;
   } else {
     $name['name'] = $_POST['name'];
