@@ -29,8 +29,8 @@
     <div class="form__row">
       <label class="form__label" for="date">Срок выполнения</label>
 
-      <input class="form__input form__input--date" type="text" name="date" id="date"
-      placeholder="Введите дату и время">
+      <input class="form__input form__input--date <?=empty($errors_date)?'':$errors_date?>" type="text" name="date" id="date" placeholder="Введите дату и время">
+        <p class="form__message"><?=empty($errors_date_message)?'':$errors_date_message;?></p>
     </div>
 
     <div class="form__row">

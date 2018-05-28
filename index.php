@@ -1,10 +1,7 @@
 <?php
 // соединение с mysqli
-$link = mysqli_connect("localhost", "root", "", "things_are_fine");
-if (!$link) {
-    printf("Текст ошибки: %s\n", mysqli_connect_error());
-    exit();
-}
+require('connection.php');
+
 
 session_start();
 if(!empty($_SESSION['user_id'])) {
@@ -18,6 +15,8 @@ $category = '';
 $cat_objective = '';
 $errors = '';
 $errors_name = '';
+$errors_date = '';
+$errors_date_message = '';
 $errors_projekt = '';
 $attribute = 'hidden';
 $catattribute = 'hidden';
@@ -103,12 +102,23 @@ if (empty($_SESSION['user_id'])) {
     }
     if (!empty($_POST['project'])) {
       $form_project =   $_POST['project'];
+      if(!check_if_project_exists($link, $form_project)) {
+        $select_project_error = 'form__input--error';
+        $errors_projekt = 'Такого проекта не существует!';
+      }
     } else {
       $select_project_error = 'form__input--error';
       $errors_projekt = 'Название проекта не может быть пустым полем';
+
     }
     if (!empty($_POST['date'])) {
-      $form_date = $_POST['date'];
+
+      if (!validateDate($_POST['date'])) {
+        $errors_date = 'form__input--error';
+        $errors_date_message = 'Неверный формат даты';
+      } else {
+        $form_date = date("Y-m-d H:m", strtotime($_POST['date']));
+      }
     }
     if (!empty($_FILES["preview"]["name"]) && empty($errors)) {
       $target_dir = getcwd() . DIRECTORY_SEPARATOR;
@@ -128,7 +138,7 @@ if (empty($_SESSION['user_id'])) {
       }
     }
 
-    if(!empty($errors_name) or !empty($errors_projekt)) {
+    if(!empty($errors_name) or !empty($errors_projekt) or !empty($errors_date)) {
       $errors = '<h3>Пожалуйста, исправьте ошибки в форме</h3>';
       $body_class = 'overlay';
       $attribute = '';
@@ -175,11 +185,12 @@ if (empty($_SESSION['user_id'])) {
 
   $cat_objective = getCatObjective($user_id, $category, $link);
 
-
+/*
   if (empty($cat_objective) and $category !=='/' and $category !=='missed' and $category !=='tomorrow' and $category !=='today' ) {
     header('Location: 404.php');
     exit();
   }
+  */
 
   $main = renderTemplate('templates/index.php', array(
     'cat_objective' => $cat_objective,
@@ -199,8 +210,11 @@ if (empty($_SESSION['user_id'])) {
     'errors_projekt' => $errors_projekt,
     'select_name_error' => $select_name_error,
     'select_project_error' => $select_project_error,
+    'errors_date' => $errors_date,
+    'errors_date_message' => $errors_date_message,
     'attribute' => $attribute));
   $left_section = renderTemplate('templates/left_section.php', array(
+
     'cat_projects' => $cat_projects,
     'category' => $category,
   ));

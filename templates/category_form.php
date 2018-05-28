@@ -7,7 +7,7 @@
     <div class="form__row">
       <label class="form__label" for="project_name">Название <sup>*</sup></label>
 
-      <input class="form__input <?=$project['error']?>" type="text" name="name" id="project_name" value="<?=$project['name']?>" placeholder="Введите название проекта">
+      <input class="form__input <?=$project['error']?>" type="text" name="name" id="project_name" value="<?=htmlspecialchars($project['name'])?>" placeholder="Введите название проекта">
       <p class="form__message"><?=$project['error_message']?></p>
     </div>
 
