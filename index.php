@@ -123,7 +123,7 @@ if (empty($_SESSION['user_id'])) {
     if (!empty($_FILES["preview"]["name"]) && empty($errors)) {
       $target_dir = getcwd() . DIRECTORY_SEPARATOR;
       $file_name =  basename($_FILES["preview"]["name"]);
-      $target_file = $target_dir . $file_name;
+      $target_file = $target_dir . "uploads/" . $file_name;
       if (file_exists($target_file)) {
         echo "Извините файл уже существует.";
         exit();

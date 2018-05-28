@@ -8,11 +8,11 @@
 <?php foreach ($cat_projects as $key => $val): ?>
 <li class="main-navigation__list-item <?=$val[0]==$category?'main-navigation__list-item--active':''?>">
 <?php if($val[0]==='/'):?>
-<a class="main-navigation__list-item-link" href="/"><?=$key;?></a>
+<a class="main-navigation__list-item-link" href="/"><?=htmlspecialchars($key);?></a>
 <?php else:?>
-<a class="main-navigation__list-item-link" href="?page=<?=$val[0];?>"><?=$key;?></a>
+<a class="main-navigation__list-item-link" href="?page=<?=$val[0];?>"><?=htmlspecialchars($key);?></a>
 <?php endif;?>
-<span class="main-navigation__list-item-count"><?=$val[1]?></span>
+<span class="main-navigation__list-item-count"><?=htmlspecialchars($val[1])?></span>
 </li>
 <?php endforeach; ?>
 
