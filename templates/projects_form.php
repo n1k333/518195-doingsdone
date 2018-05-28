@@ -18,7 +18,7 @@
         <?php if(!empty($projects_form)):?>
             <option value=""></option>
           <?php foreach($projects_form as $key => $val):?>
-            <option value="<?=$key?>"><?=$val?></option>
+            <option value="<?=$key?>"><?=htmlspecialchars($val)?></option>
           <?php endforeach;?>
         <?php endif;?>
 
