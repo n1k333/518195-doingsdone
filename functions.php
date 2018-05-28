@@ -33,11 +33,10 @@ function getCategoriesByUser($user_id, $link) {
   $result = array();
   $result['Все']=['/', 0];
   $counter = 0;
-  $stmt = mysqli_prepare($link, "SELECT projects.id as id, projects_name,
-    count(*) as count from tasks
-    join projects on tasks.projects_id = projects.id
-    where users_id = ? group by id
-  ");
+  $stmt = mysqli_prepare($link, "select id, projects_name, max(count)
+      from ( SELECT projects.id as id, projects_name, count(*) as count from tasks
+      join projects on tasks.projects_id = projects.id where users_id = ? and date_task_execution is null
+      group by id UNION SELECT id, projects_name, 0 as count from projects) t1 group by id, projects_name");
   mysqli_stmt_bind_param($stmt, 'i', $user_id);
   mysqli_stmt_execute($stmt);
   mysqli_stmt_bind_result($stmt, $id, $project_name, $count);
@@ -125,6 +124,15 @@ function check_if_user_exists($link, $email) {
   return $count;
 }
 
+function check_if_project_exists($link, $form_project) {
+  $stmt = mysqli_prepare($link, "SELECT count(*) AS count FROM projects WHERE id = ?");
+  mysqli_stmt_bind_param($stmt, 'i',  $form_project);
+  mysqli_stmt_execute($stmt);
+  mysqli_stmt_bind_result($stmt, $count);
+  mysqli_stmt_fetch($stmt);
+  return $count;
+}
+
 function create_new_user($link, $email, $password, $name) {
   $password = password_hash($password, PASSWORD_DEFAULT);
   $stmt = mysqli_prepare($link, "INSERT INTO users (reg_date, email, name, password, contacts)
@@ -197,4 +205,10 @@ function login($link, $email, $password) {
   $_SESSION['user_name'] = $name;
   $_SESSION['user_email'] = $email;
   return 0;
+}
+
+function validateDate($date, $format = 'Y-m-d H:i')
+{
+    $d = DateTime::createFromFormat($format, $date);
+    return $d && $d->format($format) == $date;
 }
