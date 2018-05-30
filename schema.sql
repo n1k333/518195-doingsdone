@@ -54,6 +54,27 @@ CREATE TABLE `tasks` (
 
 -- --------------------------------------------------------
 
+
+--
+-- Table structure for table `users_projects`
+--
+
+CREATE TABLE `users_projects` (
+  `users_id` int(11) UNSIGNED NOT NULL,
+  `projects_id` int(11) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `users_projects`
+--
+ALTER TABLE `users_projects`
+  ADD UNIQUE KEY `users_projects` (`users_id`,`projects_id`) USING BTREE;
+
+
 --
 -- Структура таблицы `users`
 --
