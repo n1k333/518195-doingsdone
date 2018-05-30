@@ -1,6 +1,13 @@
 <?php
+
 date_default_timezone_set('Europe/Moscow');
 
+/*********************************************
+* Функция принимает путь к темплейту и массив
+* элементов $key = > $value, которые вставляет
+* в темплейт, где $key превращается в имя переменной
+* а $value превращается в значение переменной
+**********************************************/
 function renderTemplate($path, $params) {
   if (!file_exists($path)) {
     return ('');
@@ -15,6 +22,10 @@ function renderTemplate($path, $params) {
   return ob_get_clean();
 }
 
+/*********************************************
+* Функция возвращает 1, если дата отстоит меньше
+* чем на 24 часа
+**********************************************/
 function task_date_limit($task_date) {
   if(empty($task_date)) {
     return 0;
@@ -24,20 +35,30 @@ function task_date_limit($task_date) {
   $hours = floor($secs_to_midnight / 3600);
   if ($hours <= 24) {
     return 1;
-  } else {
-    return 0;
   }
 }
 
+/*********************************************
+* Функция возвращает все категории пользователя
+* вместе с количеством активных заданий в категории
+* также общее количество активных заданий
+**********************************************/
 function getCategoriesByUser($user_id, $link) {
   $result = array();
   $result['Все']=['/', 0];
   $counter = 0;
-  $stmt = mysqli_prepare($link, "select id, projects_name, max(count)
-      from ( SELECT projects.id as id, projects_name, count(*) as count from tasks
-      join projects on tasks.projects_id = projects.id where users_id = ? and date_task_execution is null
-      group by id UNION SELECT id, projects_name, 0 as count from projects) t1 group by id, projects_name");
-  mysqli_stmt_bind_param($stmt, 'i', $user_id);
+  $stmt = mysqli_prepare($link, "SELECT id, projects_name, MAX(count)
+      FROM (
+					SELECT projects.id AS id, projects_name, COUNT(*) AS count FROM tasks
+						JOIN projects ON tasks.projects_id = projects.id WHERE users_id = ? AND date_task_execution IS NULL
+						GROUP BY id
+					UNION
+					SELECT projects.id AS id, projects_name, 0 AS count FROM projects
+						JOIN users_projects ON projects_id = projects.id WHERE users_id = ?
+						GROUP BY id
+						) t1
+					GROUP BY id, projects_name");
+  mysqli_stmt_bind_param($stmt, 'ii', $user_id, $user_id);
   mysqli_stmt_execute($stmt);
   mysqli_stmt_bind_result($stmt, $id, $project_name, $count);
   while (mysqli_stmt_fetch($stmt)) {
@@ -48,9 +69,16 @@ function getCategoriesByUser($user_id, $link) {
   return $result;
 }
 
-function get_all_projects($link) {
-  $stmt = mysqli_prepare($link, "SELECT id, projects_name from projects");
-  mysqli_stmt_execute($stmt);
+/*********************************************
+* Функция возвращает все проекты пользователя
+**********************************************/
+function get_all_projects($link, $user_id) {
+	$result = array();
+  $stmt = mysqli_prepare($link, "SELECT p.id, p.projects_name from projects p
+																	JOIN users_projects u ON u.projects_id = p.id
+																	WHERE u.users_id = ?");
+	mysqli_stmt_bind_param($stmt, 'i', $user_id);
+	mysqli_stmt_execute($stmt);
   mysqli_stmt_bind_result($stmt,$id, $project_name);
   while (mysqli_stmt_fetch($stmt)) {
     $result[$id] = $project_name;
@@ -58,16 +86,11 @@ function get_all_projects($link) {
   return $result;
 }
 
-function get_all_register($link) {
-  $stmt = mysqli_prepare($link, "SELECT id, email from users");
-  mysqli_stmt_execute($stmt);
-  mysqli_stmt_bind_result($stmt,$id, $email);
-  while (mysqli_stmt_fetch($stmt)) {
-    $result[$id] = $email;
-  }
-  return $result;
-}
-
+/*********************************************
+* Функция возвращает информацию о задачах
+* пользователя
+* делает фильтрацию по значению $category (today, tomorrow, missed, /, [integer])
+**********************************************/
 function getCatObjective($user_id, $category, $link) {
   $result = array();
   $sql = "SELECT tasks.id as id, tasks_name as tasks, deadline_task as cdate, projects_name as category,
@@ -115,6 +138,10 @@ function getCatObjective($user_id, $category, $link) {
   return $result;
 }
 
+/*********************************************
+* Функция проверяет существует ли пользователь
+* с определенной эл. почтой
+**********************************************/
 function check_if_user_exists($link, $email) {
   $stmt = mysqli_prepare($link, "SELECT count(*) AS count FROM users WHERE email = ?");
   mysqli_stmt_bind_param($stmt, 's',  $email);
@@ -124,15 +151,24 @@ function check_if_user_exists($link, $email) {
   return $count;
 }
 
-function check_if_project_exists($link, $form_project) {
-  $stmt = mysqli_prepare($link, "SELECT count(*) AS count FROM projects WHERE id = ?");
-  mysqli_stmt_bind_param($stmt, 'i',  $form_project);
+/*********************************************
+* фунция проверяет существует ли проект с определенным
+* номером у определенного пользователя
+**********************************************/
+function check_if_project_exists($link, $form_project, $user_id) {
+  $stmt = mysqli_prepare($link, "SELECT p.id as id FROM projects p
+																	JOIN users_projects u ON u.projects_id = p.id
+																	WHERE p.id = ? AND u.users_id = ?");
+  mysqli_stmt_bind_param($stmt, 'ii',  $form_project, $user_id);
   mysqli_stmt_execute($stmt);
-  mysqli_stmt_bind_result($stmt, $count);
+  mysqli_stmt_bind_result($stmt, $id);
   mysqli_stmt_fetch($stmt);
-  return $count;
+  return $id;
 }
 
+/*********************************************
+* фунция создает нового пользователя
+**********************************************/
 function create_new_user($link, $email, $password, $name) {
   $password = password_hash($password, PASSWORD_DEFAULT);
   $stmt = mysqli_prepare($link, "INSERT INTO users (reg_date, email, name, password, contacts)
@@ -141,6 +177,10 @@ function create_new_user($link, $email, $password, $name) {
   mysqli_stmt_execute($stmt);
 }
 
+/*********************************************
+* фунция меняет статус задания с выполненного
+* на невыполненное и наоборот
+**********************************************/
 function change_state($link, $user_id, $id) {
   $stmt = mysqli_prepare($link, "SELECT id, date_task_execution as cdate from tasks where users_id = ? and id = ?");
   mysqli_stmt_bind_param($stmt, 'ii',  $user_id, $id);
@@ -160,13 +200,32 @@ function change_state($link, $user_id, $id) {
   }
 }
 
-
-function create_new_category($link, $category) {
+/*********************************************
+* функция создает новою категорию
+* если такая уже есть - ничего не меняется и
+* ошибки не возникает
+* получает ИД проекта и вносит в связанную базу
+* ИД пользователя и проекта
+**********************************************/
+function create_new_category($link, $category, $user_id) {
   $stmt = mysqli_prepare($link, "INSERT IGNORE INTO projects (projects_name) VALUES (?)");
   mysqli_stmt_bind_param($stmt, 's',  $category);
   mysqli_stmt_execute($stmt);
+	unset($stmt);
+	$stmt = mysqli_prepare($link, "SELECT id FROM projects WHERE projects_name = ?");
+  mysqli_stmt_bind_param($stmt, 's',  $category);
+  mysqli_stmt_execute($stmt);
+	mysqli_stmt_bind_result($stmt, $id);
+	mysqli_stmt_fetch($stmt);
+	unset($stmt);
+	$stmt = mysqli_prepare($link, "INSERT IGNORE INTO users_projects (projects_id, users_id) VALUES (?, ?)");
+  mysqli_stmt_bind_param($stmt, 'ii',  $id, $user_id);
+  mysqli_stmt_execute($stmt);
 }
 
+/*********************************************
+* функция вставляет новую задачу для пользователя
+**********************************************/
 function insert_new_task($link, $user_id, $form_name, $form_project, $form_date = '', $target_file = '') {
     if (!empty($form_date)) {
       $stmt = mysqli_prepare($link, "INSERT INTO tasks (
@@ -186,6 +245,9 @@ function insert_new_task($link, $user_id, $form_name, $form_project, $form_date 
     mysqli_stmt_execute($stmt);
 }
 
+/*********************************************
+* функция авторизации
+**********************************************/
 function login($link, $email, $password) {
   $error = '';
   $stmt = mysqli_prepare($link, "SELECT id, name, password FROM users WHERE email = ?");
@@ -205,10 +267,4 @@ function login($link, $email, $password) {
   $_SESSION['user_name'] = $name;
   $_SESSION['user_email'] = $email;
   return 0;
-}
-
-function validateDate($date, $format = 'Y-m-d H:i')
-{
-    $d = DateTime::createFromFormat($format, $date);
-    return $d && $d->format($format) == $date;
 }
