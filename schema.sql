@@ -60,6 +60,7 @@ CREATE TABLE `tasks` (
 --
 
 CREATE TABLE `users_projects` (
+  `id` int(11) UNSIGNED NOT NULL,
   `users_id` int(11) UNSIGNED NOT NULL,
   `projects_id` int(11) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
